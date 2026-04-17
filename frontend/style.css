@@ -1,0 +1,538 @@
+/* ==========================================
+   CSS VARIABLES - FOR EASY THEMEING
+   ========================================== */
+:root {
+    --bg-color: #0f172a;        /* Deep blue/black background */
+    --card-bg: #1e293b;         /* Lighter panel background */
+    --text-color: #f8fafc;
+    --text-muted: #94a3b8;
+    
+    /* Dynamic Battery Status Colors */
+    --bat-low: #22c55e;    /* Green (< 50W) */
+    --bat-med: #eab308;    /* Yellow (< 120W) */
+    --bat-high: #ef4444;   /* Red (> 120W) */
+}
+
+/* ==========================================
+   GLOBAL RESET
+   ========================================== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Inter', sans-serif;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    min-height: 100vh;
+    padding: 2rem;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* ==========================================
+   HEADER & CONNECTION STATUS
+   ========================================== */
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+header h1 {
+    font-size: 2rem;
+    font-weight: 800;
+}
+
+.status-indicator {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(255,255,255,0.05);
+    padding: 0.5rem 1rem;
+    border-radius: 99px;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+/* Glow effects based on state */
+.dot.connected {
+    background-color: var(--bat-low);
+    box-shadow: 0 0 10px var(--bat-low);
+}
+
+.dot.disconnected {
+    background-color: var(--bat-high);
+    box-shadow: 0 0 10px var(--bat-high);
+}
+
+/* ==========================================
+   LAYOUT GRID
+   ========================================== */
+.grid {
+    display: grid;
+    grid-template-columns: 1fr 2fr; /* Battery Panel is 1/3, Graph is 2/3 */
+    gap: 2rem;
+}
+
+@media (max-width: 800px) {
+    .grid { grid-template-columns: 1fr; }
+}
+
+.card {
+    background-color: var(--card-bg);
+    border-radius: 16px;
+    padding: 2rem;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+}
+
+.card h2 {
+    font-size: 1.25rem;
+    margin-bottom: 1.5rem;
+    color: var(--text-muted);
+}
+
+/* ==========================================
+   BATTERY UI 
+   ========================================== */
+.battery-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 2.5rem;
+}
+
+.battery-body {
+    width: 120px;
+    height: 240px;
+    border: 4px solid var(--text-muted);
+    border-radius: 12px;
+    position: relative;
+    padding: 4px;
+    background: rgba(0,0,0,0.2);
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end; /* Fills from the bottom up */
+}
+
+/* The physical nub at the top of a battery */
+.battery-cap {
+    width: 40px;
+    height: 12px;
+    background-color: var(--text-muted);
+    border-radius: 0 4px 4px 0;
+    margin-left: -50%;
+    transform: translateY(-126px) translateX(80px);
+    position: absolute;
+    border-radius: 4px 4px 0 0;
+}
+
+/* The actual "liquid/power" fill layer inside the battery */
+.battery-level {
+    width: 100%;
+    height: 0%; /* Default filled. Overwritten by JS dynamically. */
+    background-color: var(--bat-low);
+    border-radius: 6px;
+    transition: height 0.5s ease-out, background-color 0.5s ease-out;
+}
+
+.battery-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-weight: 800;
+    font-size: 1.5rem;
+    text-shadow: 1px 1px 4px rgba(0,0,0,0.8);
+    display: flex;
+    align-items: baseline;
+    gap: 0.25rem;
+    z-index: 10;
+}
+
+.battery-text span {
+    font-size: 2.5rem;
+}
+
+/* ==========================================
+   METRICS & EVENT LOG 
+   ========================================== */
+.stats-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.stat-box {
+    background: rgba(0,0,0,0.2);
+    padding: 1rem;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+}
+
+.stat-label {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.stat-value {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-top: 0.25rem;
+}
+
+/* Budget Tracker */
+.budget-tracker {
+    background: rgba(0,0,0,0.2);
+    border-radius: 8px;
+    padding: 1.25rem;
+    margin-bottom: 2rem;
+    border: 1px solid rgba(255,255,255,0.05);
+}
+
+.budget-bar-track {
+    width: 100%;
+    height: 12px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 6px;
+    overflow: hidden;
+    margin-top: 0.5rem;
+}
+
+.budget-bar-fill {
+    height: 100%;
+    width: 0%;
+    background-color: var(--bat-low); /* default green */
+    border-radius: 6px;
+    transition: width 0.5s ease-out, background-color 0.3s ease;
+}
+
+.device-log {
+    background: rgba(0,0,0,0.15);
+    border-radius: 8px;
+    padding: 1rem;
+    height: 150px;
+    overflow-y: auto;
+}
+
+.device-log h3 {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    margin-bottom: 0.5rem;
+}
+
+.device-log ul { list-style: none; }
+.device-log li {
+    font-size: 0.85rem;
+    padding: 0.4rem 0;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    display: flex;
+    justify-content: space-between;
+}
+.log-time { color: var(--text-muted); font-size: 0.75rem; }
+
+/* ==========================================
+   GRAPH & EVENT ALERTS 
+   ========================================== */
+.chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* The red "Spike Detected!" popup badge */
+.spike-badge {
+    background-color: var(--bat-high);
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    animation: pulse 1s infinite alternate;
+}
+
+.spike-badge.hidden { display: none; }
+
+@keyframes pulse {
+    0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+    100% { transform: scale(1.05); box-shadow: 0 0 10px 5px rgba(239, 68, 68, 0); }
+}
+
+.chart-container {
+    height: 350px;
+    width: 100%;
+    margin-bottom: 2rem;
+    margin-top: 1rem;
+}
+
+/* ==========================================
+   SIMULATION CONTROL BUTTONS
+   ========================================== */
+.controls-section {
+    background: rgba(0,0,0,0.15);
+    padding: 1.5rem;
+    border-radius: 8px;
+}
+
+.controls-section h3 { margin-bottom: 0.25rem; }
+.subtitle {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-bottom: 1rem;
+}
+
+.button-group {
+    display: flex;
+    gap: 1rem;
+}
+
+.btn {
+    border: none;
+    padding: 0.75rem 1.25rem;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.1s, opacity 0.2s;
+    flex: 1;
+}
+
+.btn:active { transform: scale(0.95); }
+.btn:hover { opacity: 0.9; }
+
+/* Theming for simulation buttons */
+.btn-bulb { background: #3b82f6; color: white; }
+.btn-fan { background: #8b5cf6; color: white; }
+.btn-off { background: #ef4444; color: white; }
+
+/* ==========================================
+   TARIFF MODAL SETTINGS
+   ========================================== */
+.modal {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    opacity: 1;
+    transition: opacity 0.3s ease;
+}
+
+.modal.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.modal-content {
+    background: var(--card-bg);
+    padding: 2rem;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 400px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    transform: translateY(0);
+    transition: transform 0.3s ease;
+}
+
+.modal.hidden .modal-content {
+    transform: translateY(-20px);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    padding-bottom: 1rem;
+}
+
+.modal-header h2 {
+    margin-bottom: 0;
+    font-size: 1.2rem;
+    color: var(--text-color);
+}
+
+.modal-close {
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: var(--text-muted);
+}
+
+.modal-close:hover {
+    color: var(--text-color);
+}
+
+.form-group {
+    margin-bottom: 1rem;
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group label {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-bottom: 0.4rem;
+}
+
+.form-group input {
+    padding: 0.75rem;
+    border-radius: 6px;
+    border: 1px solid rgba(255,255,255,0.2);
+    background: rgba(0,0,0,0.2);
+    color: var(--text-color);
+    font-size: 1rem;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: #3b82f6;
+}
+
+/* ==========================================
+   APPLIANCE GRID (SIMULATION)
+   ========================================== */
+.appliances-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+    max-height: 250px;
+    overflow-y: auto;
+    padding-right: 0.5rem;
+}
+
+/* Custom Scrollbar for the list */
+.appliances-grid::-webkit-scrollbar { width: 6px; }
+.appliances-grid::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); border-radius: 4px; }
+.appliances-grid::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
+
+.app-item {
+    background: rgba(0,0,0,0.2);
+    border: 1px solid rgba(255,255,255,0.05);
+    border-radius: 8px;
+    padding: 0.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.app-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.app-title {
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.app-power {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+}
+
+.app-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.app-btn {
+    background: rgba(255,255,255,0.1);
+    border: none;
+    color: white;
+    width: 24px;
+    height: 24px;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    transition: background 0.2s;
+}
+
+.app-btn:hover {
+    background: rgba(255,255,255,0.2);
+}
+
+.app-count {
+    font-size: 0.85rem;
+    font-weight: bold;
+    min-width: 12px;
+    text-align: center;
+}
+.app-count.active {
+    color: var(--bat-low); /* Green when at least 1 is on */
+}
+
+/* ==========================================
+   MODE TOGGLE SWITCH
+   ========================================== */
+.mode-toggle {
+    display: flex;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 99px;
+    padding: 4px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.mode-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    padding: 0.5rem 1rem;
+    border-radius: 99px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.mode-btn.active {
+    background: #3b82f6; /* Blue highlight */
+    color: #ffffff;
+    box-shadow: 0 2px 10px rgba(59, 130, 246, 0.3);
+}
+
+.mode-btn:hover:not(.active) {
+    color: var(--text-color);
+}
+
+/* ==========================================
+   DISABLED STATES
+   ========================================== */
+.disabled-section {
+    opacity: 0.5;
+    pointer-events: none;
+    position: relative;
+}
+
+.disabled-section::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    z-index: 10;
+}

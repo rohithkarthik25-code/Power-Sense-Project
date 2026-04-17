@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <!-- Ensures mobile responsiveness -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-Time Power Dashboard</title>
+    
+    <!-- Chart.js link for the graph -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Modern Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header & Connection Status -->
+        <header>
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <h1>IoT Power Dashboard</h1>
+                <button id="settings-btn" class="btn btn-fan" style="padding: 0.5rem 1rem; font-size: 0.9rem;">⚙ Tariff Settings</button>
+            </div>
+            
+            <!-- Global Mode Toggle -->
+            <div class="mode-toggle">
+                <button id="btn-mode-real" class="mode-btn active" onclick="setMode('REAL')">Live ESP32 Mode</button>
+                <button id="btn-mode-mock" class="mode-btn" onclick="setMode('MOCK')">Mock Simulator</button>
+            </div>
+
+            <div class="status-indicator">
+                <span id="ws-status-dot" class="dot disconnected"></span>
+                <span id="ws-status-text">Disconnected</span>
+            </div>
+        </header>
+
+        <div class="grid">
+            <!-- LEFT PANEL: Dynamic Battery & Logs -->
+            <div class="card panel-left">
+                <h2>Live Power Usage</h2>
+                
+                <!-- Battery Load Visualization -->
+                <div class="battery-container">
+                    <div class="battery-body">
+                        <!-- 'battery-level' height is modified dynamically via JS -->
+                        <div class="battery-level" id="battery-level"></div>
+                        <div class="battery-text">
+                            <span id="power-value">0.0</span> W
+                        </div>
+                    </div>
+                    <!-- Cap of the battery -->
+                    <div class="battery-cap"></div>
+                </div>
+
+                <!-- Voltage / Current Stats -->
+                <div class="stats-row">
+                    <div class="stat-box">
+                        <span class="stat-label">Voltage</span>
+                        <span class="stat-value" id="voltage-value">0.0 V</span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-label">Current</span>
+                        <span class="stat-value" id="current-value">0.00 A</span>
+                    </div>
+                </div>
+
+                <!-- Financial Impact Stats -->
+                <div class="stats-row" style="margin-top: -1rem; margin-bottom: 2rem;">
+                    <div class="stat-box" style="background: rgba(34, 197, 94, 0.15); border: 1px solid rgba(34, 197, 94, 0.3);">
+                        <span class="stat-label" style="color: #4ade80;">Live Hourly Cost</span>
+                        <span class="stat-value" id="cost-hourly" style="color: #4ade80;">$0.00</span>
+                    </div>
+                    <div class="stat-box" style="background: rgba(234, 179, 8, 0.15); border: 1px solid rgba(234, 179, 8, 0.3);">
+                        <span class="stat-label" style="color: #fde047;">Est. Monthly Bill</span>
+                        <span class="stat-value" id="cost-monthly" style="color: #fde047;">$0.00</span>
+                    </div>
+                </div>
+
+                <!-- Daily Gamification Budget -->
+                <div class="budget-tracker">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 0.5rem;">
+                        <div>
+                            <h3 style="font-size: 0.9rem; color: var(--text-muted);">Daily Energy Goal</h3>
+                            <div id="budget-status-text" style="font-size: 0.8rem; font-weight: bold; margin-top: 0.2rem;">🟢 On Track</div>
+                        </div>
+                        <div style="text-align: right;">
+                            <span id="budget-current" style="font-weight: 800; font-size: 1.1rem;">$0.00</span>
+                            <span id="budget-max" style="color: var(--text-muted); font-size: 0.8rem;">/ $5.00</span>
+                        </div>
+                    </div>
+                    <div class="budget-bar-track">
+                        <div id="budget-bar-fill" class="budget-bar-fill"></div>
+                    </div>
+                    <div style="font-size: 0.75rem; color: #94a3b8; margin-top: 0.5rem; text-align: center;">
+                        * Based on projected 24h usage at current load
+                    </div>
+                </div>
+
+                <!-- Inference Log List -->
+                <div class="device-log" id="device-log">
+                    <h3>Inferred Activity Log</h3>
+                    <ul id="log-list">
+                        <!-- Inferences (e.g. Bulb turned on) are injected here -->
+                    </ul>
+                </div>
+            </div>
+
+            <!-- RIGHT PANEL: Graph & Mocking Controls -->
+            <div class="card panel-right">
+                <div class="chart-header">
+                    <h2>Power Spike Graph</h2>
+                    <!-- 'Hidden' removed dynamically when spike hits -->
+                    <span id="spike-alert" class="spike-badge hidden">Spike Detected!</span>
+                </div>
+                
+                <!-- Chart Container -->
+                <div class="chart-container">
+                    <canvas id="powerChart"></canvas>
+                </div>
+
+                <!-- Control Buttons for Simulation -->
+                <div id="simulator-controls" class="controls-section">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                        <h3>Virtual Home Appliance Controls</h3>
+                        <button onclick="simulateDevice('RESET', 'all')" class="btn btn-off" style="padding: 0.3rem 0.6rem; font-size: 0.8rem; flex: 0;">Reset All</button>
+                    </div>
+                    <p class="subtitle">Turn appliances ON or OFF to see real-time power and cost impact (Requires mock mode).</p>
+                    <div id="appliances-grid" class="appliances-grid">
+                        <div style="text-align: center; color: var(--text-muted); padding: 1rem;">Waiting for server connection...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- HISTORICAL TRENDS PANEL -->
+        <div class="card trends-panel" style="margin-top: 2rem;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 1rem;">
+                <div>
+                    <h2>📊 Weekly Historical Trends</h2>
+                    <p class="subtitle" style="margin-bottom: 0;">Comparing your daily energy consumption (kWh) and spending.</p>
+                </div>
+                <div style="text-align: right; background: rgba(0,0,0,0.2); padding: 0.5rem 1rem; border-radius: 8px;">
+                    <div style="font-size: 0.8rem; color: var(--text-muted);">Today vs Yesterday</div>
+                    <div id="trend-comparison" style="font-weight: bold; font-size: 1.1rem; color: #22c55e;">--%</div>
+                </div>
+            </div>
+            
+            <div class="chart-container" style="height: 280px;">
+                <canvas id="trendsChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- TARIFF SETTINGS MODAL -->
+    <div id="settings-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Electricity Tariff Settings</h2>
+                <span id="close-modal" class="modal-close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="currency-symbol">Currency Symbol</label>
+                    <input type="text" id="currency-symbol" value="$" maxlength="3">
+                </div>
+                <div class="form-group">
+                    <label for="unit-rate">Flat Rate per kWh</label>
+                    <input type="number" id="unit-rate" value="0.12" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label for="fixed-charge">Fixed Monthly Charge</label>
+                    <input type="number" id="fixed-charge" value="5.00" step="0.50">
+                </div>
+                <div class="form-group">
+                    <label for="tax-rate">Tax/Duty %</label>
+                    <input type="number" id="tax-rate" value="5" step="0.1">
+                </div>
+                <div class="form-group" style="margin-top: 1rem; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 1rem;">
+                    <label for="daily-budget" style="color: #22c55e;">🎯 Daily Financial Goal</label>
+                    <input type="number" id="daily-budget" value="2.00" step="0.50">
+                    <span style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.3rem;">Set a max daily budget to keep tracking green!</span>
+                </div>
+                <button id="save-settings" class="btn btn-bulb" style="width: 100%; margin-top: 1.5rem;">Save Settings</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Core Javascript logic -->
+    <script src="script.js"></script>
+</body>
+</html>
